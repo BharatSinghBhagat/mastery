@@ -94,6 +94,27 @@ questionNoteSchema.set('toJSON', {
 
 const QuestionNote = mongoose.model('QuestionNote', questionNoteSchema);
 
+// Roadmap schema
+const roadmapSchema = new mongoose.Schema({
+  category: { type: String, required: true, unique: true },
+  title: { type: String, required: true },
+  subtitle: { type: String },
+  steps: [{
+    title: { type: String, required: true },
+    status: { type: String, default: 'upcoming' }, // 'completed', 'upcoming'
+    items: [String]
+  }],
+  updated_at: { type: Date, default: Date.now }
+});
+
+roadmapSchema.set('toJSON', {
+    virtuals: true,
+    versionKey: false,
+    transform: function (doc, ret) {   delete ret._id;  }
+});
+
+const Roadmap = mongoose.model('Roadmap', roadmapSchema);
+
 // Seed Admin
 const seedAdmin = async () => {
     try {
@@ -120,5 +141,6 @@ module.exports = {
   Interaction,
   User,
   UserProgress,
-  QuestionNote
+  QuestionNote,
+  Roadmap
 };

@@ -373,6 +373,102 @@ Question: "${question}"`;
   }
 });
 
+app.post('/api/ai/roadmap', verifyToken, async (req, res) => {
+  const { category } = req.body;
+  
+  if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'YOUR_API_KEY_HERE') {
+      return res.status(400).json({ error: 'GEMINI_API_KEY is not configured.' });
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const prompt = `You are an expert technical curriculum designer.
+Generate a structured learning roadmap for the technology: "${category}".
+If the category is "All", generate a roadmap for "Fullstack Web Development".
+
+Return ONLY a valid JSON object with this exact structure:
+{
+  "title": "Title of the Roadmap",
+  "subtitle": "A short descriptive subtitle",
+  "steps": [
+    {
+      "title": "Phase Name",
+      "status": "completed" or "upcoming",
+      "items": ["Skill 1", "Skill 2", "Skill 3"]
+    }
+  ]
+}
+Provide exactly 4 or 5 steps. Mark the first 1 or 2 as "completed" and others as "upcoming" to simulate progress. Avoid any markdown formatting like \`\`\`json, just return the raw object.`;
+
+    const result = await model.generateContent(prompt);
+    let text = result.response.text().trim();
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    const roadmap = JSON.parse(text);
+    res.json(roadmap);
+  } catch (error) {
+    console.error("Roadmap Generation Error: ", error);
+    res.status(500).json({ error: 'Failed to generate roadmap.' });
+  }
+});
+
+// --- PERSISTENT ROADMAP ROUTES ---
+
+const { Roadmap } = require('./db/database');
+
+// 16. Get roadmap for a category
+app.get('/api/roadmaps/:category', verifyToken, async (req, res) => {
+  try {
+    const roadmap = await Roadmap.findOne({ category: req.params.category });
+    if (!roadmap) return res.status(404).json({ error: 'Roadmap not found' });
+    res.json(roadmap);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 17. Save/Update roadmap (Admin only)
+app.post('/api/roadmaps', verifyToken, isAdmin, async (req, res) => {
+  const { category, title, subtitle, steps } = req.body;
+  try {
+    const roadmap = await Roadmap.findOneAndUpdate(
+      { category },
+      { title, subtitle, steps, updated_at: new Date() },
+      { upsert: true, new: true }
+    );
+    res.json(roadmap);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 18. Delete roadmap (Superadmin only)
+const { isSuperAdmin } = require('./auth');
+app.delete('/api/roadmaps/:category', verifyToken, isSuperAdmin, async (req, res) => {
+  try {
+    const result = await Roadmap.deleteOne({ category: req.params.category });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Roadmap not found' });
+    res.json({ message: 'Roadmap deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 19. Delete all questions in a category (Superadmin only)
+app.delete('/api/questions/category/:category', verifyToken, isSuperAdmin, async (req, res) => {
+  try {
+    const { category } = req.params;
+    await Question.deleteMany({ category });
+    // Also delete the roadmap for this category
+    await Roadmap.deleteOne({ category });
+    res.json({ message: `Curriculum ${category} deleted successfully.` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

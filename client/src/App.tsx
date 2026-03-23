@@ -10,9 +10,10 @@ import { Login } from './components/Login';
 import { Register } from './components/Register';
 import { Hero } from './components/Hero';
 import { StorySection } from './components/StorySection';
-import { Search, Bell, Menu, X, Zap, Users } from 'lucide-react';
+import { Search, Bell, Menu, X, Zap, Users, Map } from 'lucide-react';
 import { RevisionReminder } from './components/RevisionReminder';
 import { AdminApproval } from './components/AdminApproval';
+import { Roadmap } from './components/Roadmap';
 
 function App() {
   const { isAuthenticated, user } = useAuth();
@@ -25,6 +26,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
   const [approvalOpen, setApprovalOpen] = useState(false);
+  const [roadmapOpen, setRoadmapOpen] = useState(false);
   const [difficultyFilter, setDifficultyFilter] = useState('All');
 
   const fetchAllData = async () => {
@@ -307,13 +309,24 @@ function App() {
         <footer className="py-10 px-4 lg:px-10 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">
           <p className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-slate-800"></span>
-            © 2026 JS Mastery Nexus.
+            © 2026 JS Mastery Nexus. Developed by <span className="text-indigo-400/80">Bharat</span> 🛠️
           </p>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-indigo-400 transition-colors">Roadmap</a>
+            <button onClick={() => setRoadmapOpen(true)} className="hover:text-indigo-400 transition-colors uppercase tracking-widest font-bold">Roadmap</button>
             <a href="#" className="hover:text-indigo-400 transition-colors">Security</a>
           </div>
         </footer>
+
+        <AnimatePresence>
+          {roadmapOpen && (
+            <Roadmap 
+              onClose={() => setRoadmapOpen(false)} 
+              category={activeCategory} 
+              isAdmin={user?.role === 'admin' || user?.role === 'superadmin'}
+              isSuperAdmin={user?.role === 'superadmin'}
+            />
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );

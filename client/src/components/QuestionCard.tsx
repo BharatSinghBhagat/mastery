@@ -60,13 +60,13 @@ export const QuestionCard = ({ question, role, onRefresh, index }: any) => {
           )}
         </div>
         <div className="flex gap-6">
-           <button onClick={handleLike} className="flex items-center gap-2 group/btn">
+           <button onClick={handleLike} className="flex items-center gap-2 group/btn" title="Like this insight">
              <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${question.has_liked ? 'bg-indigo-500/20 text-indigo-400 scale-110' : 'bg-white/5 text-slate-500 group-hover/btn:text-indigo-400 group-hover/btn:bg-indigo-500/10'}`}>
                 <ThumbsUp size={14} fill={question.has_liked ? 'currentColor' : 'none'} />
              </div>
              <span className={`text-xs font-bold transition-colors ${question.has_liked ? 'text-indigo-400' : 'text-slate-600 group-hover/btn:text-indigo-400'}`}>{question.likes}</span>
            </button>
-           <button onClick={handleMarkAsAsked} className="flex items-center gap-2 group/btn">
+           <button onClick={handleMarkAsAsked} className="flex items-center gap-2 group/btn" title="Marked as Asked in Interviews">
              <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${question.has_asked ? 'bg-rose-500/20 text-rose-400 scale-110' : 'bg-white/5 text-slate-500 group-hover/btn:text-rose-400 group-hover/btn:bg-rose-500/10'}`}>
                 <MapPin size={14} fill={question.has_asked ? 'currentColor' : 'none'} />
              </div>

@@ -7,9 +7,11 @@ import {
   LogOut, 
   ChevronRight,
   Zap,
-  X
+  X,
+  Trash2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { deleteCurriculum } from '../api';
 
 interface SidebarProps {
   activeCategory: string;
@@ -22,8 +24,22 @@ interface SidebarProps {
 
 export const Sidebar = ({ activeCategory, setActiveCategory, activeFilter, setActiveFilter, stats, onClose }: SidebarProps) => {
   const { user, logoutUser } = useAuth();
-  const categories = ['All', 'JavaScript', 'TypeScript', 'React', 'Angular', 'Node.js', 'System Design'];
+  const [categories, setCategories] = React.useState(['All', 'JavaScript', 'TypeScript', 'React', 'Angular', 'Node.js', 'System Design']);
 
+  const handleDeleteCurriculum = async (e: React.MouseEvent, cat: string) => {
+    e.stopPropagation();
+    if (cat === 'All') return;
+    if (!window.confirm(`DANGER: Are you sure you want to delete the entire ${cat} curriculum? This will delete ALL questions and the roadmap for this category.`)) return;
+    
+    try {
+      await deleteCurriculum(cat);
+      setCategories(prev => prev.filter(c => c !== cat));
+      if (activeCategory === cat) setActiveCategory('All');
+    } catch (err) {
+      alert('Failed to delete curriculum.');
+    }
+  };
+  
   const NavButton = ({ id, icon: Icon, label, filterValue, colorClass }: any) => (
     <button 
       onClick={() => setActiveFilter(filterValue)}
@@ -74,17 +90,28 @@ export const Sidebar = ({ activeCategory, setActiveCategory, activeFilter, setAc
              <h4 className="text-[10px] uppercase tracking-[0.2em] text-slate-600 font-extrabold px-5 mb-4">Curriculum</h4>
              <div className="grid grid-cols-1 gap-1">
                {categories.map(cat => (
-                 <button 
-                   key={cat}
-                   onClick={() => setActiveCategory(cat)}
-                   className={`w-full flex items-center justify-between px-5 py-3 rounded-xl text-sm transition-all ${activeCategory === cat ? 'bg-indigo-500/10 text-indigo-400 font-bold' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
-                 >
-                   <span className="flex items-center gap-4">
-                     <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${activeCategory === cat ? 'bg-indigo-400 scale-150 shadow-[0_0_8px_rgba(99,102,241,0.8)]' : 'bg-slate-700'}`}></span>
-                     {cat}
-                   </span>
-                   {activeCategory === cat && <ChevronRight size={14} className="text-indigo-400" />}
-                 </button>
+                 <div key={cat} className="group/cat relative">
+                    <button 
+                      onClick={() => setActiveCategory(cat)}
+                      className={`w-full flex items-center justify-between px-5 py-3 rounded-xl text-sm transition-all ${activeCategory === cat ? 'bg-indigo-500/10 text-indigo-400 font-bold' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+                    >
+                      <span className="flex items-center gap-4">
+                        <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${activeCategory === cat ? 'bg-indigo-400 scale-150 shadow-[0_0_8px_rgba(99,102,241,0.8)]' : 'bg-slate-700'}`}></span>
+                        {cat}
+                      </span>
+                      {activeCategory === cat && <ChevronRight size={14} className="text-indigo-400" />}
+                    </button>
+                    
+                    {user?.role === 'superadmin' && cat !== 'All' && (
+                       <button 
+                        onClick={(e) => handleDeleteCurriculum(e, cat)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 opacity-0 group-hover/cat:opacity-100 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center"
+                        title="Delete Entire Curriculum"
+                       >
+                         <Trash2 size={12} />
+                       </button>
+                    )}
+                 </div>
                ))}
              </div>
           </div>

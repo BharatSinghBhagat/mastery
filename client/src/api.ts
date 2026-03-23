@@ -94,3 +94,28 @@ export const updateUserRole = async (userId: string, role: 'user' | 'admin') => 
   const response = await axios.post(`${API_URL}/admin/users/${userId}/role`, { role });
   return response.data;
 };
+
+export const getAiRoadmap = async (category: string) => {
+  const response = await axios.post(`${API_URL}/ai/roadmap`, { category });
+  return response.data;
+};
+
+export const getRoadmap = async (category: string) => {
+  const response = await axios.get(`${API_URL}/roadmaps/${category}`);
+  return response.data;
+};
+
+export const saveRoadmap = async (data: any) => {
+  const response = await axios.post(`${API_URL}/roadmaps`, data);
+  return response.data;
+};
+
+export const deleteRoadmap = async (category: string) => {
+  const response = await axios.delete(`${API_URL}/roadmaps/${category}`);
+  return response.data;
+};
+
+export const deleteCurriculum = async (category: string) => {
+  const response = await axios.delete(`${API_URL}/questions/category/${category}`);
+  return response.data;
+};
