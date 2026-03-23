@@ -1,4 +1,12 @@
 require('dotenv').config();
+// Polyfill fetch for node < 18
+if (!global.fetch) {
+  const fetch = require('node-fetch');
+  global.fetch = fetch;
+  global.Headers = fetch.Headers;
+  global.Request = fetch.Request;
+  global.Response = fetch.Response;
+}
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');

@@ -1,3 +1,4 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/angular_interview_db';
@@ -98,7 +99,7 @@ const seedAdmin = async () => {
     try {
         const adminExists = await User.findOne({ username: 'admin' });
         if (!adminExists) {
-            const adminPassword = '$2b$10$VGWrqIgz.cLv2vqlWViGSuHKoxaxuOFvLsXo9N9GfzkbXk1B/zR86'; // 'admin' hashed
+            const adminPassword = '$2b$10$eWpdBQxYdXVevH.MKPK1henBRkUQOEHs3W0a9As90TSwqxa4eq1PG'; // 'admin' hashed
             await User.create({ 
                 username: 'admin', 
                 password: adminPassword, 
