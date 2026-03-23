@@ -12,7 +12,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 
 const { mongoose, Question, Interaction, User, UserProgress, QuestionNote } = require('./db/database');
-const { hashPassword, comparePassword, generateToken, verifyToken, isAdmin } = require('./auth');
+const { hashPassword, comparePassword, generateToken, verifyToken, isAdmin, isSuperAdmin } = require('./auth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
@@ -329,7 +329,6 @@ app.delete('/api/admin/users/:id', verifyToken, isAdmin, async (req, res) => {
 });
 
 // 15. Update user role (Superadmin only)
-const { isSuperAdmin } = require('./auth');
 app.post('/api/admin/users/:id/role', verifyToken, isSuperAdmin, async (req, res) => {
   try {
     const { role } = req.body;
@@ -445,7 +444,6 @@ app.post('/api/roadmaps', verifyToken, isAdmin, async (req, res) => {
 });
 
 // 18. Delete roadmap (Superadmin only)
-const { isSuperAdmin } = require('./auth');
 app.delete('/api/roadmaps/:category', verifyToken, isSuperAdmin, async (req, res) => {
   try {
     const result = await Roadmap.deleteOne({ category: req.params.category });
