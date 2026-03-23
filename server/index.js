@@ -403,12 +403,19 @@ Provide exactly 4 or 5 steps. Mark the first 1 or 2 as "completed" and others as
 
     const result = await model.generateContent(prompt);
     let text = result.response.text().trim();
+    console.log("Raw AI Response:", text); // Debugging
+    
     text = text.replace(/```json/g, '').replace(/```/g, '').trim();
     
-    const roadmap = JSON.parse(text);
-    res.json(roadmap);
+    try {
+      const roadmap = JSON.parse(text);
+      res.json(roadmap);
+    } catch (parseError) {
+      console.error("JSON Parse Error on AI response:", parseError);
+      res.status(500).json({ error: 'AI returned non-JSON content.' });
+    }
   } catch (error) {
-    console.error("Roadmap Generation Error: ", error);
+    console.error("Roadmap Generation Full Error: ", error);
     res.status(500).json({ error: 'Failed to generate roadmap.' });
   }
 });
