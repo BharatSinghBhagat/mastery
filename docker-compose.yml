@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: angular-mongo-db
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=angular_interview_db
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
