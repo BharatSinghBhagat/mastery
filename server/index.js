@@ -401,24 +401,17 @@ Provide exactly 4 or 5 steps. Mark the first 1 or 2 as "completed" and others as
 
     let result;
     try {
-      // Try Gemini 2.0 Flash (Newest/Resilient)
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" }, { apiVersion: "v1" });
+      // Try gemini-flash-latest (Aliases to available stable version)
+      const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" }, { apiVersion: "v1" });
       result = await model.generateContent(prompt);
-    } catch (v2Error) {
-      console.warn("2.0-flash failed, trying 1.5-flash:", v2Error.message);
-      try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
-        result = await model.generateContent(prompt);
-      } catch (v1_5Error) {
-        console.warn("1.5-flash failed, falling back to Gemini Pro:", v1_5Error.message);
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" }, { apiVersion: "v1" });
-        result = await model.generateContent(prompt);
-      }
+    } catch (flashError) {
+      console.warn("Flash latest failed, trying Pro latest:", flashError.message);
+      // Fallback to Gemini Pro latest
+      const model = genAI.getGenerativeModel({ model: "gemini-pro-latest" }, { apiVersion: "v1" });
+      result = await model.generateContent(prompt);
     }
 
     let text = result.response.text().trim();
-    console.log("Raw AI Response:", text); // Debugging
-    
     text = text.replace(/```json/g, '').replace(/```/g, '').trim();
     
     try {
@@ -430,25 +423,9 @@ Provide exactly 4 or 5 steps. Mark the first 1 or 2 as "completed" and others as
     }
   } catch (error) {
     console.error("Roadmap Generation Full Error: ", error);
-    
-    // Help the user diagnose why models are missing (for Render debug)
-    if (error.status === 404 || error.status === 429) {
-      try {
-        const fetch = require('node-fetch');
-        const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`;
-        const listRes = await fetch(listUrl);
-        const listData = await listRes.json();
-        console.log("DIAGNOSTIC - Available Models for this Key on Render:", 
-          listData.models ? listData.models.map(m => m.name).join(', ') : "NONE / Error listing models");
-      } catch (logErr) {
-        console.error("Failed to run diagnostics:", logErr.message);
-      }
-    }
-
     res.status(500).json({ 
       error: 'Failed to generate roadmap.', 
-      details: error.message,
-      stack: error.stack?.substring(0, 100)
+      details: error.message
     });
   }
 });
