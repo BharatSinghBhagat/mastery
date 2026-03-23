@@ -412,11 +412,15 @@ Provide exactly 4 or 5 steps. Mark the first 1 or 2 as "completed" and others as
       res.json(roadmap);
     } catch (parseError) {
       console.error("JSON Parse Error on AI response:", parseError);
-      res.status(500).json({ error: 'AI returned non-JSON content.' });
+      res.status(500).json({ error: 'AI returned non-JSON content.', raw: text });
     }
   } catch (error) {
     console.error("Roadmap Generation Full Error: ", error);
-    res.status(500).json({ error: 'Failed to generate roadmap.' });
+    res.status(500).json({ 
+      error: 'Failed to generate roadmap.', 
+      details: error.message,
+      stack: error.stack?.substring(0, 100) // Small stack snippet
+    });
   }
 });
 
