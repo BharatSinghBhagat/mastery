@@ -381,8 +381,6 @@ app.post('/api/ai/roadmap', verifyToken, async (req, res) => {
 
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
     const prompt = `You are an expert technical curriculum designer.
 Generate a structured learning roadmap for the technology: "${category}".
 If the category is "All", generate a roadmap for "Fullstack Web Development".
@@ -401,7 +399,18 @@ Return ONLY a valid JSON object with this exact structure:
 }
 Provide exactly 4 or 5 steps. Mark the first 1 or 2 as "completed" and others as "upcoming" to simulate progress. Avoid any markdown formatting like \`\`\`json, just return the raw object.`;
 
-    const result = await model.generateContent(prompt);
+    let result;
+    try {
+      // Try Flash 1.5 first (Standard)
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
+      result = await model.generateContent(prompt);
+    } catch (flashError) {
+      console.warn("Flash model failed, falling back to Gemini Pro:", flashError.message);
+      // Fallback to Gemini Pro if Flash fails (happens in some regions/setups)
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" }, { apiVersion: "v1" });
+      result = await model.generateContent(prompt);
+    }
+
     let text = result.response.text().trim();
     console.log("Raw AI Response:", text); // Debugging
     
