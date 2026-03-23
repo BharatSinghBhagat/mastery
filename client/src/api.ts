@@ -89,3 +89,8 @@ export const deleteUser = async (userId: string) => {
   const response = await axios.delete(`${API_URL}/admin/users/${userId}`);
   return response.data;
 };
+
+export const updateUserRole = async (userId: string, role: 'user' | 'admin') => {
+  const response = await axios.post(`${API_URL}/admin/users/${userId}/role`, { role });
+  return response.data;
+};

@@ -275,7 +275,14 @@ app.delete('/api/notes/:noteId', verifyToken, async (req, res) => {
 // 12. Get all users
 app.get('/api/admin/users', verifyToken, isAdmin, async (req, res) => {
   try {
-    const users = await User.find({}, '-password').sort({ username: 1 });
+    let filter = {};
+    // Regular admins can only see "user" role
+    if (req.user.role === 'admin') {
+      filter = { role: 'user' };
+    }
+    // Superadmins can see everyone
+    
+    const users = await User.find(filter, '-password').sort({ username: 1 });
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -296,18 +303,44 @@ app.post('/api/admin/users/:id/approve', verifyToken, isAdmin, async (req, res) 
 // 14. Delete a user
 app.delete('/api/admin/users/:id', verifyToken, isAdmin, async (req, res) => {
   try {
+    const userToDelete = await User.findById(req.params.id);
+    if (!userToDelete) return res.status(404).json({ error: 'User not found' });
+
     // Prevent deleting oneself
     if (req.params.id === req.user.id) {
       return res.status(400).json({ error: 'You cannot delete your own account' });
     }
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Permission check: Admins cannot delete other admins or superadmins
+    if (req.user.role === 'admin' && (userToDelete.role === 'admin' || userToDelete.role === 'superadmin')) {
+      return res.status(403).json({ error: 'Admins cannot delete other administrators.' });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
     
     // Also clean up their progress and notes
     await UserProgress.deleteMany({ user_id: req.params.id });
     await QuestionNote.deleteMany({ user_id: req.params.id });
     
-    res.json({ message: `User ${user.username} deleted` });
+    res.json({ message: `User ${userToDelete.username} deleted` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 15. Update user role (Superadmin only)
+const { isSuperAdmin } = require('./auth');
+app.post('/api/admin/users/:id/role', verifyToken, isSuperAdmin, async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (!['user', 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+
+    const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    res.json({ message: `User ${user.username} role updated to ${role}` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

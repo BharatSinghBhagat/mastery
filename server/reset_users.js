@@ -20,7 +20,7 @@ async function resetUsers() {
     await User.create({ 
       username: 'admin', 
       password: adminPassword, 
-      role: 'admin',
+      role: 'superadmin',
       is_approved: true 
     });
     

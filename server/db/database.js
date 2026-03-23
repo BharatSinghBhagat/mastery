@@ -103,7 +103,7 @@ const seedAdmin = async () => {
             await User.create({ 
                 username: 'admin', 
                 password: adminPassword, 
-                role: 'admin',
+                role: 'superadmin',
                 is_approved: true 
             });
             console.log("Admin user seeded in MongoDB (auto-approved).");

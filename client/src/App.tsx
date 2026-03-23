@@ -10,8 +10,9 @@ import { Login } from './components/Login';
 import { Register } from './components/Register';
 import { Hero } from './components/Hero';
 import { StorySection } from './components/StorySection';
-import { Search, Bell, Menu, X, Zap } from 'lucide-react';
+import { Search, Bell, Menu, X, Zap, Users } from 'lucide-react';
 import { RevisionReminder } from './components/RevisionReminder';
+import { AdminApproval } from './components/AdminApproval';
 
 function App() {
   const { isAuthenticated, user } = useAuth();
@@ -23,6 +24,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
+  const [approvalOpen, setApprovalOpen] = useState(false);
   const [difficultyFilter, setDifficultyFilter] = useState('All');
 
   const fetchAllData = async () => {
@@ -169,6 +171,39 @@ function App() {
                 setSearchQuery('');
               }}
             />
+
+            {(user?.role === 'admin' || user?.role === 'superadmin') && (
+              <div className="relative">
+                <button 
+                  onClick={() => setApprovalOpen(!approvalOpen)}
+                  className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${
+                    approvalOpen ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-400' : 'bg-white/5 border-white/5 text-slate-400 hover:text-white'
+                  }`}
+                  title="Apprentice Oversight"
+                >
+                  <Users size={20} />
+                </button>
+                <AnimatePresence>
+                  {approvalOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setApprovalOpen(false)}></div>
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute right-0 mt-3 z-50 glass p-2 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                      >
+                        <div className="p-3 border-b border-white/5 mb-2 flex items-center justify-between">
+                           <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Apprentice Oversight</span>
+                           <Users size={12} className="text-slate-600" />
+                        </div>
+                        <AdminApproval compact={true} />
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
           </div>
         </header>
 
