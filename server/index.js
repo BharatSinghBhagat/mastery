@@ -401,13 +401,12 @@ Provide exactly 4 or 5 steps. Mark the first 1 or 2 as "completed" and others as
 
     let result;
     try {
-      // Try gemini-flash-latest (Aliases to available stable version)
-      const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" }, { apiVersion: "v1" });
+      // Switch back to v1beta as the diagnostic list came from v1beta
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1beta" });
       result = await model.generateContent(prompt);
     } catch (flashError) {
-      console.warn("Flash latest failed, trying Pro latest:", flashError.message);
-      // Fallback to Gemini Pro latest
-      const model = genAI.getGenerativeModel({ model: "gemini-pro-latest" }, { apiVersion: "v1" });
+      console.warn("Flash v1beta failed, trying Pro v1beta:", flashError.message);
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" }, { apiVersion: "v1beta" });
       result = await model.generateContent(prompt);
     }
 
