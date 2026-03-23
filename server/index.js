@@ -430,10 +430,25 @@ Provide exactly 4 or 5 steps. Mark the first 1 or 2 as "completed" and others as
     }
   } catch (error) {
     console.error("Roadmap Generation Full Error: ", error);
+    
+    // Help the user diagnose why models are missing (for Render debug)
+    if (error.status === 404 || error.status === 429) {
+      try {
+        const fetch = require('node-fetch');
+        const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`;
+        const listRes = await fetch(listUrl);
+        const listData = await listRes.json();
+        console.log("DIAGNOSTIC - Available Models for this Key on Render:", 
+          listData.models ? listData.models.map(m => m.name).join(', ') : "NONE / Error listing models");
+      } catch (logErr) {
+        console.error("Failed to run diagnostics:", logErr.message);
+      }
+    }
+
     res.status(500).json({ 
       error: 'Failed to generate roadmap.', 
       details: error.message,
-      stack: error.stack?.substring(0, 100) // Small stack snippet
+      stack: error.stack?.substring(0, 100)
     });
   }
 });
