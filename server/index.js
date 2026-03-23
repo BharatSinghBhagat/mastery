@@ -126,7 +126,7 @@ app.post('/api/questions/:id/progress', verifyToken, async (req, res) => {
     await UserProgress.findOneAndUpdate(
       { user_id: userId, question_id: questionId },
       { status, updated_at: new Date() },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
     res.json({ message: 'Progress updated' });
   } catch (err) {
@@ -401,14 +401,19 @@ Provide exactly 4 or 5 steps. Mark the first 1 or 2 as "completed" and others as
 
     let result;
     try {
-      // Try Flash 1.5 first (Standard)
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
+      // Try Gemini 2.0 Flash (Newest/Resilient)
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" }, { apiVersion: "v1" });
       result = await model.generateContent(prompt);
-    } catch (flashError) {
-      console.warn("Flash model failed, falling back to Gemini Pro:", flashError.message);
-      // Fallback to Gemini Pro if Flash fails (happens in some regions/setups)
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" }, { apiVersion: "v1" });
-      result = await model.generateContent(prompt);
+    } catch (v2Error) {
+      console.warn("2.0-flash failed, trying 1.5-flash:", v2Error.message);
+      try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
+        result = await model.generateContent(prompt);
+      } catch (v1_5Error) {
+        console.warn("1.5-flash failed, falling back to Gemini Pro:", v1_5Error.message);
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" }, { apiVersion: "v1" });
+        result = await model.generateContent(prompt);
+      }
     }
 
     let text = result.response.text().trim();
@@ -455,7 +460,7 @@ app.post('/api/roadmaps', verifyToken, isAdmin, async (req, res) => {
     const roadmap = await Roadmap.findOneAndUpdate(
       { category },
       { title, subtitle, steps, updated_at: new Date() },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
     res.json(roadmap);
   } catch (err) {
