@@ -73,3 +73,19 @@ export const generateAIAnswer = async (question: string) => {
   const response = await axios.post(`${API_URL}/ai/generate`, { question });
   return response.data;
 };
+
+// --- ADMIN USER MANAGEMENT ---
+export const getUsers = async () => {
+  const response = await axios.get(`${API_URL}/admin/users`);
+  return response.data;
+};
+
+export const approveUser = async (userId: string) => {
+  const response = await axios.post(`${API_URL}/admin/users/${userId}/approve`);
+  return response.data;
+};
+
+export const deleteUser = async (userId: string) => {
+  const response = await axios.delete(`${API_URL}/admin/users/${userId}`);
+  return response.data;
+};

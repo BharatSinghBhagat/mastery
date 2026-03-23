@@ -48,6 +48,10 @@ app.post('/api/auth/login', async (req, res) => {
     const isValid = await comparePassword(password, user.password);
     if (!isValid) return res.status(401).json({ error: 'Invalid password' });
     
+    if (!user.is_approved) {
+      return res.status(403).json({ error: 'Your account is pending approval by an administrator.' });
+    }
+    
     const token = generateToken(user);
     res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
   } catch (err) {
@@ -258,6 +262,49 @@ app.delete('/api/notes/:noteId', verifyToken, async (req, res) => {
 });
 
 // --- AI ROUTES ---
+// --- ADMIN USER MANAGEMENT ---
+
+// 12. Get all users
+app.get('/api/admin/users', verifyToken, isAdmin, async (req, res) => {
+  try {
+    const users = await User.find({}, '-password').sort({ username: 1 });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 13. Approve a user
+app.post('/api/admin/users/:id/approve', verifyToken, isAdmin, async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, { is_approved: true }, { new: true });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ message: `User ${user.username} approved successfully` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 14. Delete a user
+app.delete('/api/admin/users/:id', verifyToken, isAdmin, async (req, res) => {
+  try {
+    // Prevent deleting oneself
+    if (req.params.id === req.user.id) {
+      return res.status(400).json({ error: 'You cannot delete your own account' });
+    }
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    // Also clean up their progress and notes
+    await UserProgress.deleteMany({ user_id: req.params.id });
+    await QuestionNote.deleteMany({ user_id: req.params.id });
+    
+    res.json({ message: `User ${user.username} deleted` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/ai/generate', verifyToken, isAdmin, async (req, res) => {
   const { question } = req.body;
   

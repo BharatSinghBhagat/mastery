@@ -40,7 +40,7 @@ export const Register = ({ onSwitch }: { onSwitch: () => void }) => {
         </div>
 
         {error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl mb-6 text-sm text-center">{error}</div>}
-        {success && <div className="bg-green-500/10 border border-green-500/20 text-green-400 p-3 rounded-xl mb-6 text-sm text-center">Registration successful! Redirecting...</div>}
+        {success && <div className="bg-green-500/10 border border-green-500/20 text-green-400 p-3 rounded-xl mb-6 text-sm text-center">Registration complete! Your account is pending approval by the admin.</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">

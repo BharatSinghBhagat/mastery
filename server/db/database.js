@@ -45,7 +45,8 @@ const Interaction = mongoose.model('Interaction', interactionSchema);
 const userSchema = new mongoose.Schema({
   username: { type: String, unique: true, required: true },
   password: { type: String, required: true },
-  role: { type: String, default: 'user' }
+  role: { type: String, default: 'user' },
+  is_approved: { type: Boolean, default: false }
 });
 
 userSchema.set('toJSON', {
@@ -98,8 +99,13 @@ const seedAdmin = async () => {
         const adminExists = await User.findOne({ username: 'admin' });
         if (!adminExists) {
             const adminPassword = '$2b$10$VGWrqIgz.cLv2vqlWViGSuHKoxaxuOFvLsXo9N9GfzkbXk1B/zR86'; // 'admin' hashed
-            await User.create({ username: 'admin', password: adminPassword, role: 'admin' });
-            console.log("Admin user seeded in MongoDB.");
+            await User.create({ 
+                username: 'admin', 
+                password: adminPassword, 
+                role: 'admin',
+                is_approved: true 
+            });
+            console.log("Admin user seeded in MongoDB (auto-approved).");
         }
     } catch (e) {
         console.error("Error seeding admin", e);
