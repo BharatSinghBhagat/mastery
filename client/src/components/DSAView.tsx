@@ -10,6 +10,7 @@ export const DSAView = () => {
   const [sections, setSections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [filterMode, setFilterMode] = useState<'all' | 'completed' | 'revision'>('all');
 
   // Admin states
   const [showAddSection, setShowAddSection] = useState(false);
@@ -98,6 +99,26 @@ export const DSAView = () => {
 
   return (
     <div className="space-y-6">
+      <div className="flex gap-6 mb-6 border-b border-white/5 pb-2">
+        <button 
+          onClick={() => setFilterMode('all')}
+          className={`text-[11px] font-bold uppercase tracking-widest pb-3 border-b-2 transition-all ${filterMode === 'all' ? 'border-fuchsia-500 text-fuchsia-400' : 'border-transparent text-slate-500 hover:text-slate-300 hover:border-white/10'}`}
+        >
+          All Topics
+        </button>
+        <button 
+          onClick={() => setFilterMode('completed')}
+          className={`text-[11px] font-bold uppercase tracking-widest pb-3 border-b-2 transition-all ${filterMode === 'completed' ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-300 hover:border-white/10'}`}
+        >
+          Completed
+        </button>
+        <button 
+          onClick={() => setFilterMode('revision')}
+          className={`text-[11px] font-bold uppercase tracking-widest pb-3 border-b-2 transition-all ${filterMode === 'revision' ? 'border-rose-500 text-rose-400' : 'border-transparent text-slate-500 hover:text-slate-300 hover:border-white/10'}`}
+        >
+          Needs Revision
+        </button>
+      </div>
       {isAdmin && (
         <div className="flex justify-end mb-4">
           <button 
@@ -132,7 +153,10 @@ export const DSAView = () => {
       )}
 
       <div className="space-y-4">
-        {sections.map(section => (
+        {sections.map(sec => ({
+          ...sec,
+          filteredQuestions: sec.questions.filter((q: any) => filterMode === 'all' ? true : q.user_status === filterMode)
+        })).filter(sec => filterMode === 'all' || sec.filteredQuestions.length > 0).map(section => (
           <div key={section.id} className="glass rounded-2xl overflow-hidden border-white/5 transition-all">
             <button 
               className="w-full flex justify-between items-center p-5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
@@ -144,9 +168,14 @@ export const DSAView = () => {
                 </div>
                 <div className="text-left">
                   <h3 className="text-lg flex-1 justify-between font-bold text-white tracking-wide">{section.name}</h3>
-                  <p className="text-[11px] text-slate-500 font-medium">{section.questions.length} Questions 
-                    <span className="mx-2">•</span> 
-                    {section.questions.filter((q: any) => q.user_status === 'completed').length} Completed
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    {filterMode === 'all' ? section.questions.length : section.filteredQuestions.length} {filterMode === 'all' ? 'Questions' : 'Matches'}
+                    {filterMode === 'all' && (
+                      <>
+                        <span className="mx-2">•</span> 
+                        {section.questions.filter((q: any) => q.user_status === 'completed').length} Completed
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
@@ -164,7 +193,7 @@ export const DSAView = () => {
                   className="px-5 pb-5 pt-2"
                 >
                   <div className="space-y-2 mt-4">
-                    {section.questions.map((q: any) => (
+                    {section.filteredQuestions.map((q: any) => (
                       <div key={q.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 hover:border-white/10 transition-all gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-1">
@@ -205,9 +234,9 @@ export const DSAView = () => {
                       </div>
                     ))}
                     
-                    {section.questions.length === 0 && (
+                    {section.filteredQuestions.length === 0 && (
                       <div className="text-center py-6 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
-                        No questions in this section yet
+                        No questions found matching this filter
                       </div>
                     )}
                   </div>
@@ -262,6 +291,13 @@ export const DSAView = () => {
             </div>
             <h3 className="text-xl font-bold text-slate-300 mb-1">No DSA Sections Yet</h3>
             {isAdmin ? <p className="text-sm text-slate-500">Click "Add Section" to create your first curriculum.</p> : <p className="text-sm text-slate-500">The curriculum is currently empty.</p>}
+          </div>
+        )}
+
+        {sections.length > 0 && sections.filter(sec => filterMode === 'all' || sec.questions.filter((q: any) => q.user_status === filterMode).length > 0).length === 0 && (
+          <div className="text-center py-12 glass rounded-2xl border border-white/5">
+            <h3 className="text-lg font-bold text-slate-300 mb-1">No matches found</h3>
+            <p className="text-sm text-slate-500">You don't have any questions marked as {filterMode} yet.</p>
           </div>
         )}
       </div>
