@@ -119,3 +119,24 @@ export const deleteCurriculum = async (category: string) => {
   const response = await axios.delete(`${API_URL}/questions/category/${category}`);
   return response.data;
 };
+
+// --- DSA API ---
+export const getDSABoard = async () => {
+  const response = await axios.get(`${API_URL}/dsa`);
+  return response.data;
+};
+
+export const addDSASection = async (data: { name: string }) => {
+  const response = await axios.post(`${API_URL}/dsa/sections`, data);
+  return response.data;
+};
+
+export const addDSAQuestion = async (data: { section_id: string, title: string, level: string, link: string }) => {
+  const response = await axios.post(`${API_URL}/dsa/questions`, data);
+  return response.data;
+};
+
+export const updateDSAProgress = async (id: string, status: string) => {
+  const response = await axios.put(`${API_URL}/dsa/questions/${id}/progress`, { status });
+  return response.data;
+};

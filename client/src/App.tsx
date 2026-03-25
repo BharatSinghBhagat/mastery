@@ -14,6 +14,7 @@ import { Search, Bell, Menu, X, Zap, Users, Map } from 'lucide-react';
 import { RevisionReminder } from './components/RevisionReminder';
 import { AdminApproval } from './components/AdminApproval';
 import { Roadmap } from './components/Roadmap';
+import { DSAView } from './components/DSAView';
 
 function App() {
   const { isAuthenticated, user } = useAuth();
@@ -230,17 +231,17 @@ function App() {
               <div>
                 <h4 className="text-[10px] uppercase tracking-[0.4em] text-indigo-400/70 font-black mb-2">Knowledge Stream</h4>
                 <h2 className="text-3xl lg:text-5xl font-black tracking-tighter leading-none">
-                  {activeFilter === 'all' ? 'Core Library' : activeFilter === 'completed' ? 'Mastered Vault' : 'Neural Revision'}
+                  {activeFilter === 'all' ? 'Core Library' : activeFilter === 'completed' ? 'Mastered Vault' : activeFilter === 'dsa' ? 'DSA Mastery' : 'Neural Revision'}
                 </h2>
               </div>
-              {user?.role === 'admin' && activeFilter !== 'admin' && (
+              {user?.role === 'admin' && activeFilter !== 'admin' && activeFilter !== 'dsa' && (
                 <button onClick={() => setActiveFilter('admin')} className="btn btn-primary h-12 px-6 rounded-xl text-sm self-start sm:self-auto">
                   Architect Panel
                 </button>
               )}
             </div>
             {/* Difficulty filter pills */}
-            {activeFilter !== 'admin' && (
+            {activeFilter !== 'admin' && activeFilter !== 'dsa' && (
               <div className="flex flex-wrap gap-2 mb-6 lg:mb-8">
                 {(['All', 'Beginner', 'Intermediate', 'Advanced'] as const).map(level => {
                   const colors: Record<string, string> = {
@@ -276,6 +277,8 @@ function App() {
 
             {activeFilter === 'admin' ? (
               <AdminDashboard />
+            ) : activeFilter === 'dsa' ? (
+              <DSAView />
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-8">
                 {loading ? (

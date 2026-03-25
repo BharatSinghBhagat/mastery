@@ -483,6 +483,86 @@ app.delete('/api/questions/category/:category', verifyToken, isSuperAdmin, async
   }
 });
 
+// --- DSA ROUTES ---
+const { DSASection, DSAQuestion, DSAProgress } = require('./db/database');
+
+app.get('/api/dsa', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const sections = await DSASection.find().sort({ created_at: 1 }).lean();
+    const questions = await DSAQuestion.find().sort({ created_at: 1 }).lean();
+    
+    let progressMap = {};
+    if (userId) {
+      const userProgressList = await DSAProgress.find({ user_id: userId }).lean();
+      progressMap = userProgressList.reduce((acc, p) => {
+        acc[p.question_id.toString()] = p;
+        return acc;
+      }, {});
+    }
+
+    const questionsWithProgress = questions.map(q => {
+      const prog = progressMap[q._id.toString()];
+      return {
+        ...q,
+        id: q._id,
+        user_status: prog ? prog.status : 'todo'
+      };
+    });
+
+    const sectionsWithQuestions = sections.map(sec => ({
+      ...sec,
+      id: sec._id,
+      questions: questionsWithProgress.filter(q => q.section_id.toString() === sec._id.toString())
+    }));
+
+    res.json(sectionsWithQuestions);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/dsa/sections', verifyToken, isAdmin, async (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'Section name is required' });
+  try {
+    const section = new DSASection({ name });
+    await section.save();
+    res.json({ id: section.id, ...section.toObject(), message: 'Section added' });
+  } catch (err) {
+    if (err.code === 11000) return res.status(400).json({ error: 'Section name already exists' });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/dsa/questions', verifyToken, isAdmin, async (req, res) => {
+  const { section_id, title, level, link } = req.body;
+  if (!section_id || !title) return res.status(400).json({ error: 'Section ID and Title are required' });
+  try {
+    const q = new DSAQuestion({ section_id, title, level: level || 'Easy', link });
+    await q.save();
+    res.json({ id: q.id, ...q.toObject(), message: 'Question added' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/dsa/questions/:id/progress', verifyToken, async (req, res) => {
+  const { status } = req.body;
+  const questionId = req.params.id;
+  const userId = req.user.id;
+  try {
+    await DSAProgress.findOneAndUpdate(
+      { user_id: userId, question_id: questionId },
+      { status, updated_at: new Date() },
+      { upsert: true }
+    );
+    res.json({ message: 'Progress updated' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

@@ -115,6 +115,36 @@ roadmapSchema.set('toJSON', {
 
 const Roadmap = mongoose.model('Roadmap', roadmapSchema);
 
+// DSA Section schema
+const dsaSectionSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  created_at: { type: Date, default: Date.now }
+});
+dsaSectionSchema.set('toJSON', { virtuals: true, versionKey: false, transform: function (doc, ret) { delete ret._id; } });
+const DSASection = mongoose.model('DSASection', dsaSectionSchema);
+
+// DSA Question schema
+const dsaQuestionSchema = new mongoose.Schema({
+  section_id: { type: mongoose.Schema.Types.ObjectId, ref: 'DSASection', required: true },
+  title: { type: String, required: true },
+  level: { type: String, default: 'Easy' }, // Easy, Medium, Hard
+  link: { type: String },
+  created_at: { type: Date, default: Date.now }
+});
+dsaQuestionSchema.set('toJSON', { virtuals: true, versionKey: false, transform: function (doc, ret) { delete ret._id; } });
+const DSAQuestion = mongoose.model('DSAQuestion', dsaQuestionSchema);
+
+// DSA Progress schema
+const dsaProgressSchema = new mongoose.Schema({
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  question_id: { type: mongoose.Schema.Types.ObjectId, ref: 'DSAQuestion', required: true },
+  status: { type: String, default: 'todo' }, // 'todo', 'revision', 'completed'
+  updated_at: { type: Date, default: Date.now }
+});
+dsaProgressSchema.index({ user_id: 1, question_id: 1 }, { unique: true });
+dsaProgressSchema.set('toJSON', { virtuals: true, versionKey: false, transform: function (doc, ret) { delete ret._id; } });
+const DSAProgress = mongoose.model('DSAProgress', dsaProgressSchema);
+
 // Seed Admin
 const seedAdmin = async () => {
     try {
@@ -142,5 +172,8 @@ module.exports = {
   User,
   UserProgress,
   QuestionNote,
-  Roadmap
+  Roadmap,
+  DSASection,
+  DSAQuestion,
+  DSAProgress
 };

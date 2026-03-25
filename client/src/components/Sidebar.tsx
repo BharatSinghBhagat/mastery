@@ -8,7 +8,8 @@ import {
   ChevronRight,
   Zap,
   X,
-  Trash2
+  Trash2,
+  Brain
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { deleteCurriculum } from '../api';
@@ -84,6 +85,7 @@ export const Sidebar = ({ activeCategory, setActiveCategory, activeFilter, setAc
             <NavButton id="dash" icon={LayoutDashboard} label="Intelligence" filterValue="all" colorClass="text-indigo-400" />
             <NavButton id="comp" icon={CheckCircle2} label="Mastered" filterValue="completed" colorClass="text-emerald-400" />
             <NavButton id="rev" icon={Clock} label="Revision" filterValue="revision" colorClass="text-rose-400" />
+            <NavButton id="dsa" icon={Brain} label="DSA Mastery" filterValue="dsa" colorClass="text-fuchsia-400" />
           </div>
 
           <div className="space-y-2">
