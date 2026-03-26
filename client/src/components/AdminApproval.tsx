@@ -5,20 +5,28 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
 export const AdminApproval = ({ compact = false }: { compact?: boolean }) => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, logoutUser } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   const isSuper = currentUser?.role === 'superadmin';
 
   const fetchUsers = async () => {
     setLoading(true);
+    setError('');
     try {
       const data = await getUsers();
       setUsers(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setError('Session expired. Please log in again.');
+        logoutUser();
+      } else {
+        setError('Failed to load users. Click to retry.');
+      }
     } finally {
       setLoading(false);
     }
@@ -66,6 +74,20 @@ export const AdminApproval = ({ compact = false }: { compact?: boolean }) => {
     return (
       <div className="flex justify-center py-8">
         <div className="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`${compact ? 'w-80 p-4' : ''} text-center py-6 px-4 border border-dashed border-rose-500/20 rounded-2xl`}>
+        <p className="text-rose-400 text-xs font-bold mb-3">{error}</p>
+        <button
+          onClick={fetchUsers}
+          className="text-[10px] font-bold uppercase tracking-widest bg-indigo-500/10 text-indigo-400 px-4 py-2 rounded-lg border border-indigo-500/20 hover:bg-indigo-500/20 transition-all"
+        >
+          Retry
+        </button>
       </div>
     );
   }

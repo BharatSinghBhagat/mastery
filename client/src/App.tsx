@@ -234,7 +234,7 @@ function App() {
                   {activeFilter === 'all' ? 'Core Library' : activeFilter === 'completed' ? 'Mastered Vault' : activeFilter === 'dsa' ? 'DSA Mastery' : 'Neural Revision'}
                 </h2>
               </div>
-              {user?.role === 'admin' && activeFilter !== 'admin' && activeFilter !== 'dsa' && (
+              {(user?.role === 'admin' || user?.role === 'superadmin') && activeFilter !== 'admin' && activeFilter !== 'dsa' && (
                 <button onClick={() => setActiveFilter('admin')} className="btn btn-primary h-12 px-6 rounded-xl text-sm self-start sm:self-auto">
                   Architect Panel
                 </button>

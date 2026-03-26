@@ -115,6 +115,15 @@ roadmapSchema.set('toJSON', {
 
 const Roadmap = mongoose.model('Roadmap', roadmapSchema);
 
+// Topic schema
+const topicSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  created_at: { type: Date, default: Date.now }
+});
+topicSchema.set('toJSON', { virtuals: true, versionKey: false, transform: function (doc, ret) { delete ret._id; } });
+const Topic = mongoose.model('Topic', topicSchema);
+
+
 // DSA Section schema
 const dsaSectionSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
@@ -159,8 +168,18 @@ const seedAdmin = async () => {
             });
             console.log("Admin user seeded in MongoDB (auto-approved).");
         }
+        
+        // Seed Topics
+        const initialTopics = ['JavaScript', 'TypeScript', 'React', 'Angular', 'Node.js', 'System Design'];
+        for (const name of initialTopics) {
+            const exists = await Topic.findOne({ name });
+            if (!exists) {
+                await Topic.create({ name });
+                console.log(`Topic seeded: ${name}`);
+            }
+        }
     } catch (e) {
-        console.error("Error seeding admin", e);
+        console.error("Error seeding data", e);
     }
 }
 mongoose.connection.once('connected', seedAdmin);
@@ -175,5 +194,6 @@ module.exports = {
   Roadmap,
   DSASection,
   DSAQuestion,
-  DSAProgress
+  DSAProgress,
+  Topic
 };

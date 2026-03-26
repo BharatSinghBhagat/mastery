@@ -12,7 +12,8 @@ import {
   Brain
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { deleteCurriculum } from '../api';
+import { deleteCurriculum, getTopics, addTopic, deleteTopic } from '../api';
+import { PlusCircle } from 'lucide-react';
 
 interface SidebarProps {
   activeCategory: string;
@@ -25,19 +26,51 @@ interface SidebarProps {
 
 export const Sidebar = ({ activeCategory, setActiveCategory, activeFilter, setActiveFilter, stats, onClose }: SidebarProps) => {
   const { user, logoutUser } = useAuth();
-  const [categories, setCategories] = React.useState(['All', 'JavaScript', 'TypeScript', 'React', 'Angular', 'Node.js', 'System Design']);
+  const [categories, setCategories] = React.useState<string[]>(['All']);
+  const [showAddTopic, setShowAddTopic] = React.useState(false);
+  const [newTopicName, setNewTopicName] = React.useState('');
 
-  const handleDeleteCurriculum = async (e: React.MouseEvent, cat: string) => {
+  const fetchTopics = async () => {
+    try {
+      const data = await getTopics();
+      const topicNames = data.map((t: any) => t.name);
+      setCategories(['All', ...topicNames]);
+    } catch (err) {
+      console.error('Failed to fetch topics', err);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchTopics();
+  }, []);
+
+  const handleAddTopic = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTopicName.trim()) return;
+    try {
+      await addTopic(newTopicName.trim());
+      setNewTopicName('');
+      setShowAddTopic(false);
+      fetchTopics();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to add topic');
+    }
+  };
+
+  const handleDeleteTopic = async (e: React.MouseEvent, cat: string) => {
     e.stopPropagation();
     if (cat === 'All') return;
+    
+    // First confirm deletion of curriculum
     if (!window.confirm(`DANGER: Are you sure you want to delete the entire ${cat} curriculum? This will delete ALL questions and the roadmap for this category.`)) return;
     
     try {
-      await deleteCurriculum(cat);
+      await deleteCurriculum(cat); // Delete questions/roadmap
+      await deleteTopic(cat);      // Delete topic entry
       setCategories(prev => prev.filter(c => c !== cat));
       if (activeCategory === cat) setActiveCategory('All');
     } catch (err) {
-      alert('Failed to delete curriculum.');
+      alert('Failed to delete topic.');
     }
   };
   
@@ -89,7 +122,41 @@ export const Sidebar = ({ activeCategory, setActiveCategory, activeFilter, setAc
           </div>
 
           <div className="space-y-2">
-             <h4 className="text-[10px] uppercase tracking-[0.2em] text-slate-600 font-extrabold px-5 mb-4">Curriculum</h4>
+             <div className="flex items-center justify-between px-5 mb-4">
+               <h4 className="text-[10px] uppercase tracking-[0.2em] text-slate-600 font-extrabold">Curriculum</h4>
+               {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                 <button 
+                  onClick={() => setShowAddTopic(!showAddTopic)}
+                  className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center text-slate-500 hover:text-white hover:bg-indigo-500/20 transition-all border border-white/5"
+                  title="Add New Topic"
+                 >
+                   <PlusCircle size={14} />
+                 </button>
+               )}
+             </div>
+
+             {showAddTopic && (
+               <motion.form 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                onSubmit={handleAddTopic}
+                className="px-5 mb-4 space-y-2"
+               >
+                 <input 
+                  type="text" 
+                  value={newTopicName}
+                  onChange={e => setNewTopicName(e.target.value)}
+                  placeholder="Topic name..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs focus:border-indigo-500/50 outline-none"
+                  autoFocus
+                 />
+                 <div className="flex gap-2">
+                   <button type="submit" className="flex-1 bg-indigo-500 text-white rounded-lg py-1.5 text-[10px] font-bold uppercase tracking-widest">Save</button>
+                   <button type="button" onClick={() => setShowAddTopic(false)} className="flex-1 bg-white/5 text-slate-400 rounded-lg py-1.5 text-[10px] font-bold uppercase tracking-widest">Cancel</button>
+                 </div>
+               </motion.form>
+             )}
+
              <div className="grid grid-cols-1 gap-1">
                {categories.map(cat => (
                  <div key={cat} className="group/cat relative">
@@ -104,15 +171,15 @@ export const Sidebar = ({ activeCategory, setActiveCategory, activeFilter, setAc
                       {activeCategory === cat && <ChevronRight size={14} className="text-indigo-400" />}
                     </button>
                     
-                    {user?.role === 'superadmin' && cat !== 'All' && (
-                       <button 
-                        onClick={(e) => handleDeleteCurriculum(e, cat)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 opacity-0 group-hover/cat:opacity-100 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center"
-                        title="Delete Entire Curriculum"
-                       >
-                         <Trash2 size={12} />
-                       </button>
-                    )}
+                     {user?.role === 'superadmin' && cat !== 'All' && (
+                        <button 
+                         onClick={(e) => handleDeleteTopic(e, cat)}
+                         className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 opacity-0 group-hover/cat:opacity-100 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center"
+                         title="Delete Entire Topic"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                     )}
                  </div>
                ))}
              </div>

@@ -11,7 +11,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 
-const { mongoose, Question, Interaction, User, UserProgress, QuestionNote } = require('./db/database');
+const { mongoose, Question, Interaction, User, UserProgress, QuestionNote, Topic } = require('./db/database');
 const { hashPassword, comparePassword, generateToken, verifyToken, isAdmin, isSuperAdmin } = require('./auth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
@@ -478,6 +478,43 @@ app.delete('/api/questions/category/:category', verifyToken, isSuperAdmin, async
     // Also delete the roadmap for this category
     await Roadmap.deleteOne({ category });
     res.json({ message: `Curriculum ${category} deleted successfully.` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- TOPIC ROUTES ---
+// 20. Get all topics
+app.get('/api/topics', async (req, res) => {
+  try {
+    const topics = await Topic.find().sort({ name: 1 });
+    res.json(topics);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 21. Add a new topic (Admin only)
+app.post('/api/topics', verifyToken, isAdmin, async (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'Topic name is required' });
+  try {
+    const topic = new Topic({ name });
+    await topic.save();
+    res.json({ message: 'Topic added successfully', topic });
+  } catch (err) {
+    if (err.code === 11000) return res.status(400).json({ error: 'Topic already exists' });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 22. Delete a topic (Superadmin only)
+app.delete('/api/topics/:name', verifyToken, isSuperAdmin, async (req, res) => {
+  try {
+    const { name } = req.params;
+    const result = await Topic.findOneAndDelete({ name });
+    if (!result) return res.status(404).json({ error: 'Topic not found' });
+    res.json({ message: `Topic ${name} deleted successfully.` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -12,6 +12,23 @@ axios.interceptors.request.use(config => {
   return config;
 });
 
+// Handle expired tokens globally
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      // Only auto-logout if we had a token (i.e., user was logged in)
+      const token = localStorage.getItem('token');
+      if (token) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.reload();
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const login = async (credentials: any) => {
   const response = await axios.post(`${API_URL}/auth/login`, credentials);
   return response.data;
@@ -138,5 +155,21 @@ export const addDSAQuestion = async (data: { section_id: string, title: string, 
 
 export const updateDSAProgress = async (id: string, status: string) => {
   const response = await axios.put(`${API_URL}/dsa/questions/${id}/progress`, { status });
+  return response.data;
+};
+
+// --- TOPICS API ---
+export const getTopics = async () => {
+  const response = await axios.get(`${API_URL}/topics`);
+  return response.data;
+};
+
+export const addTopic = async (name: string) => {
+  const response = await axios.post(`${API_URL}/topics`, { name });
+  return response.data;
+};
+
+export const deleteTopic = async (name: string) => {
+  const response = await axios.delete(`${API_URL}/topics/${name}`);
   return response.data;
 };

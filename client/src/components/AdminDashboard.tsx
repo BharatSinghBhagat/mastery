@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { addQuestion, generateAIAnswer } from '../api';
+import { addQuestion, generateAIAnswer, getTopics } from '../api';
 import { motion } from 'framer-motion';
 import { PlusCircle, Send, CheckCircle } from 'lucide-react';
 
@@ -12,6 +12,20 @@ export const AdminDashboard = () => {
   });
   const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
   const [aiLoading, setAiLoading] = useState(false);
+  const [topics, setTopics] = useState<string[]>(['General']);
+
+  React.useEffect(() => {
+    const fetchTopics = async () => {
+      try {
+        const data = await getTopics();
+        const names = data.map((t: any) => t.name);
+        setTopics(names.includes('General') ? names : ['General', ...names]);
+      } catch (err) {
+        console.error('Failed to fetch topics', err);
+      }
+    };
+    fetchTopics();
+  }, []);
 
   const handleGenerateAI = async () => {
     if (!formData.question.trim()) {
@@ -74,28 +88,24 @@ export const AdminDashboard = () => {
               <label className="text-[10px] uppercase tracking-[0.2em] text-slate-600 font-black ml-1">Expertise Domain</label>
               <select 
                 value={formData.category}
-                className="h-14 bg-white/5 border-white/10 rounded-2xl px-5 text-sm font-bold"
+                className="h-14 bg-[#0d0d18] border border-white/10 rounded-2xl px-5 text-sm font-bold text-slate-200"
                 onChange={(e) => setFormData({...formData, category: e.target.value})}
               >
-                <option value="General">General</option>
-                <option value="JavaScript">JavaScript</option>
-                <option value="TypeScript">TypeScript</option>
-                <option value="React">React</option>
-                <option value="Angular">Angular</option>
-                <option value="Node.js">Node.js</option>
-                <option value="System Design">System Design</option>
+                {topics.map(topic => (
+                  <option key={topic} value={topic} className="bg-[#0d0d18] text-slate-200">{topic}</option>
+                ))}
               </select>
             </div>
             <div className="space-y-3">
               <label className="text-[10px] uppercase tracking-[0.2em] text-slate-600 font-black ml-1">Cognitive Depth</label>
               <select 
                 value={formData.difficulty}
-                className="h-14 bg-white/5 border-white/10 rounded-2xl px-5 text-sm font-bold"
+                className="h-14 bg-[#0d0d18] border border-white/10 rounded-2xl px-5 text-sm font-bold text-slate-200"
                 onChange={(e) => setFormData({...formData, difficulty: e.target.value})}
               >
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
+                <option value="Beginner" className="bg-[#0d0d18] text-slate-200">Beginner</option>
+                <option value="Intermediate" className="bg-[#0d0d18] text-slate-200">Intermediate</option>
+                <option value="Advanced" className="bg-[#0d0d18] text-slate-200">Advanced</option>
               </select>
             </div>
           </div>
